@@ -8,6 +8,11 @@ function App() {
   const [query, setQuery] = useState(""); //termo para busca dos livros
   const [books, setBooks] = useState([]); //lista de livros buscados
   const [listaLeitura, setListaLeitura] = useState([]); //livros escolhidos pelo usuário
+  const [selectedBook, setSelectedBook] = useState(null);
+  const [date, setDate] = useState("");
+  const [pages, setPages] = useState("");
+  const [feeling, setFeeling] = useState("");
+  const [notes, setNotes] = useState("");
   const [error, setError] = useState(""); 
 
   useEffect( () => {
@@ -49,6 +54,42 @@ function App() {
 
     localStorage.setItem("books", JSON.stringify(updatedBooks)); // updatedBooks se torna a nova lista de livros
     setListaLeitura(updatedBooks); // atualiza a lista de leitura na UI
+  };
+
+  const handleAddRegistro = (e) => {
+    e.preventDefault();
+
+    const newRegistro = {
+      date,
+      pages,
+      feeling,
+      notes
+    };
+
+    const updatedList = listaLeitura.map((book) =>
+      book.id === selectedBook.id
+        ? { ...book, registros: [...book.registros, newRegistro] }
+        : book
+    );
+
+    setListaLeitura(updatedList);
+    localStorage.setItem("books", JSON.stringify(updatedList));
+
+    const updatedSelectedBook = updatedList.find(
+      (book) => book.id === selectedBook.id
+    );
+
+    setSelectedBook(updatedSelectedBook);
+    setDate("");
+    setPages("");
+    setFeeling("");
+    setNotes("");
+  };
+
+  const formatDateBR = (isoDate) => {
+    if (!isoDate) return "";
+    const [year, month, day] = isoDate.split("-");
+    return `${day}/${month}/${year}`;
   };
 
   return (
@@ -96,10 +137,63 @@ function App() {
               <img src={book.capa} alt={book.titulo} width="80" />
               <p>{book.titulo}</p>
               <p>{book.autores?.join(", ")}</p>
+              
+              <button onClick={() => setSelectedBook(book)}>Registrar Leitura</button>
             </li>
           ))}
         </ul>
+      </div>
 
+      <div>
+        {selectedBook && (
+          <><form onSubmit={handleAddRegistro}>
+            <h3>Registo de Leitura</h3>
+            <input
+              type="date"
+              required
+              value={date}
+              onChange={(e) => setDate(e.target.value)} />
+
+            <input
+              type="number"
+              placeholder="Páginas lidas"
+              required
+              value={pages}
+              onChange={(e) => setPages(e.target.value)} />
+
+            <input
+              type="text"
+              placeholder="Como me senti ao terminar"
+              value={feeling}
+              onChange={(e) => setFeeling(e.target.value)} />
+
+            <textarea
+              placeholder='Anotações'
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)} />
+
+            <button type='submit'>Salvar Registro</button>
+          </form>
+          
+          <h4>Histórico</h4>
+
+          {selectedBook.registros.length === 0 && (
+            <p>Nenhum registro ainda.</p>
+          )}
+
+          <ul>
+            {selectedBook.registros.map((reg, index) => (
+              <li key={index}>
+                <p>📅 {formatDateBR(reg.date)}</p>
+                <p>📖 {reg.pages} páginas</p>
+                <p>🙂 {reg.feeling}</p>
+                <p>📝 {reg.notes}</p>
+              </li>
+            ))}
+          </ul>
+          
+          </>
+        )}
       </div>
 
     </div>
